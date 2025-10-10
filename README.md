@@ -39,6 +39,7 @@ Xây dựng hệ thống IoT nhúng cơ bản, có khả năng đọc dữ liệ
 - **NeoPixel Task**: Đổi màu LED theo tín hiệu từ RPC (nút điều khiển trên dashboard).  
 
 ---
+<img width="1612" height="854" alt="image" src="https://github.com/user-attachments/assets/bb2b6fb7-aec7-437d-b12c-3117c1955be4" />
 
 ## 🧠 Công nghệ & thư viện sử dụng
 - **Arduino Framework**
