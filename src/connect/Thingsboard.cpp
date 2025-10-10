@@ -65,7 +65,7 @@ RPC_Response setLedSwitchState(const RPC_Data &data) {
   if (ledCommandQueue != nullptr) {
     xQueueSend(ledCommandQueue, &newState, 0);
   } else {
-    Serial.println("[RPC] ⚠️ Queue not ready!");
+    Serial.println("[RPC]  Queue not ready!");
   }
 
   ledState = newState;

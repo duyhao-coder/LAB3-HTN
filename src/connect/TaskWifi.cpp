@@ -10,7 +10,7 @@ void InitWiFi() {
     delay(500);
   }
   Serial.println();
-  Serial.println("✅ Connected to WiFi!");
+  Serial.println("Connected to WiFi!");
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
   Serial.print("IP Address: ");
@@ -24,7 +24,7 @@ bool reconnectWiFi() {
     return true;
   }
 
-  Serial.println("⚠️  WiFi disconnected. Reconnecting...");
+  Serial.println("WiFi disconnected. Reconnecting...");
   WiFi.disconnect();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -36,10 +36,10 @@ bool reconnectWiFi() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n✅ Reconnected to WiFi!");
+    Serial.println("\n Reconnected to WiFi!");
     return true;
   } else {
-    Serial.println("\n❌ Failed to reconnect WiFi.");
+    Serial.println("\n Failed to reconnect WiFi.");
     return false;
   }
 }
