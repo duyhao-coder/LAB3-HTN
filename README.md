@@ -3,7 +3,7 @@
 
 [![PlatformIO Registry](https://badges.registry.platformio.org/packages/luos/library/luos_engine.svg)](https://registry.platformio.org/libraries/luos/luos_engine)
 
-# 🧠 Lab 1 – Hệ Thống Nhúng
+# 🧠 Lab 3 – Hệ Thống Nhúng
 
 ## 🎯 Giới thiệu
 Mục tiêu của Lab 3 là làm quen với hệ điều hành thời gian thực (RTOS) và cách
