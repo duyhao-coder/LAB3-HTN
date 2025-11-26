@@ -1,53 +1,801 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>ESP IOT DASHBOARD</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" type="image/png" href="favicon.png">
-        <link rel="stylesheet" type="text/css" href="style.css">
-    </head>
-    <body>
-        <div class="topnav">
-            <img src="https://i.postimg.cc/h4XKCP4v/Logo-dai-hoc-Bach-Khoa-TP-HCM.webp" alt="HCMUT_Logo" class="Logo">
-            <h1>SENSOR READINGS (WEBSOCKET)</h1>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 WiFi Setup</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 60px rgba(99, 102, 241, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 80px rgba(99, 102, 241, 0.3); }
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-section {
+            text-align: center;
+            padding: 40px 0;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .logo-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+        
+        .logo-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            border-radius: 50%;
+            animation: spin 3s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logo {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .title {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -1.5px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+        }
+        
+        .alert {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .alert-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .alert-content h3 {
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .alert-content p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 18px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:active::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 45px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+            background: white;
+        }
+        
+        .section-label {
+            padding: 16px 24px 8px;
+            font-size: 12px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .network-list {
+            max-height: 400px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .network-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .network-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin: 8px 0;
+        }
+        
+        .network-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        .network-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .network-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+        
+        .network-item:last-child {
+            border-bottom: none;
+        }
+        
+        .network-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .network-item.selected {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .network-item.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+        }
+        
+        .network-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .network-info {
+            flex: 1;
+        }
+        
+        .network-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .network-details {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .signal-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+        
+        .signal-icon {
+            width: 16px;
+            height: 12px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+        }
+        
+        .signal-bar {
+            background: rgba(255, 255, 255, 0.3);
+            width: 3px;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        .signal-bar.active {
+            background: white;
+        }
+        
+        .check-badge {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .form-section {
+            padding: 24px;
+        }
+        
+        .note {
+            background: rgba(99, 102, 241, 0.15);
+            border-left: 4px solid rgba(255, 255, 255, 0.8);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .note-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .note-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            display: block;
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+        
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 48px 24px;
+        }
+        
+        .spinner {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        
+        .spinner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+        
+        .loader-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .status {
+            padding: 20px 24px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            display: none;
+            color: white;
+            letter-spacing: 0.5px;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .status.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 60px 24px;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .empty-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .password-section {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 32px 20px 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <div class="logo-ring">
+                <div class="logo">📡</div>
+            </div>
+            <h1 class="title">WiFi Connect</h1>
+            <p class="subtitle">ESP32 Portal</p>
         </div>
-        <div class="content">
-            <div class="card-grid">
-                <div class="card">
-                    <p class="card-title"><i class="fas fa-thermometer-threequarters" style="color:#059e8a;"></i> Temperature</p>
-                    <p class="reading"><span id="temperature"></span> &deg;C</p>
-                </div>
-                <div class="card">
-                    <p class="card-title"> Humidity</p>
-                    <p class="reading"><span id="humidity"></span> &percnt;</p>
-                </div>
-                <div class="card">
-                    <p class="card-title"> Pressure</p>
-                    <p class="reading"><span id="pressure"></span> hpa</p>
-                </div>
-                <div class="card">
-                    <p class="card-title"> Sound</p>
-                    <p class="reading"><span id="sound"></span> dB</p> 
-                </div>
-                <div class="card">
-                    <p class="card-title"> pm2p5</p>
-                    <p class="reading"><span id="pm2p5"></span> mg/l</p> 
-                </div>
-                <div class="card">
-                    <p class="card-title"> PM10</p>
-                    <p class="reading"><span id="PM10"></span> mg/l</p> 
-                </div>
-                <div class="card">
-                    <p class="card-title"> Light</p>
-                    <p class="reading"><span id="light"></span> lux</p> 
-                </div>
-                <div class="card reset-card">
-                    <button id="reset" class="Delete Device">
-                    Reset Device Configuration
-                    </button>
+        
+        <div class="glass-card alert">
+            <div class="alert-icon">⚡</div>
+            <div class="alert-content">
+                <h3>Configuration Mode Active</h3>
+                <p>Your ESP32 is ready to connect to a WiFi network</p>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <button class="btn btn-secondary" onclick="scanNetworks()">
+                <span style="font-size:22px;">🔍</span>
+                <span>Scan Networks</span>
+            </button>
+        </div>
+        
+        <div class="glass-card">
+            <div class="section-label">Available Networks</div>
+            <div class="network-list" id="networkList">
+                <div class="empty">
+                    <div class="empty-icon">📶</div>
+                    <div class="empty-text">Tap "Scan Networks" to discover WiFi</div>
                 </div>
             </div>
         </div>
-        <script src="script.js"></script>
-    </body>
+        
+        <div class="glass-card">
+            <div class="form-section">
+                <div class="note">
+                    <div class="note-title">
+                        <span>💡</span>
+                        <span>Quick Guide</span>
+                    </div>
+                    <div class="note-text">
+                        To connect and save credentials, enter Device ID and Server URL first, then tap Connect. To only update settings without WiFi, just enter values and tap Save.
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Device ID</label>
+                    <input type="text" class="input-field" id="Token" placeholder="Enter device token" maxlength="128">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Server URL</label>
+                    <input type="text" class="input-field" id="serverUrl" placeholder="https://api.example.com" maxlength="256">
+                </div>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="saveSettings()">
+            <span style="font-size:22px;">💾</span>
+            <span>Save Configuration</span>
+        </button>
+        
+        <div id="passwordSection" style="display:none;" class="password-section">
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label class="input-label">WiFi Password</label>
+                        <input type="password" class="input-field" id="password" placeholder="Enter network password">
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="connectWiFi()">
+                <span style="font-size:22px;">🔐</span>
+                <span>Connect Now</span>
+            </button>
+        </div>
+        
+        <div class="glass-card loader" id="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Connecting...</div>
+        </div>
+        
+        <div class="glass-card status" id="status"></div>
+        
+        <div class="footer">ESP32 Premium Interface</div>
+    </div>
+
+    <script>
+        let selectedSSID = '';
+
+        function scanNetworks() {
+            document.getElementById('networkList').innerHTML = '<div class="empty"><div class="spinner"></div><div class="loader-text" style="margin-top:8px;">Scanning...</div></div>';
+            
+            fetch('/scan')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    data.networks.forEach(network => {
+                        const signalStrength = network.rssi;
+                        const bars = getSignalBars(signalStrength);
+                        const lockIcon = network.encryption !== 'open' ? '🔒' : '📶';
+                        
+                        html += `
+                            <div class="network-item" onclick="selectNetwork('${network.ssid}', ${network.encryption !== 'open'})">
+                                <div class="network-icon">${lockIcon}</div>
+                                <div class="network-info">
+                                    <div class="network-name">${network.ssid}</div>
+                                    <div class="network-details">
+                                        <div class="signal-badge">
+                                            <div class="signal-icon">${bars}</div>
+                                            <span>${signalStrength} dBm</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('networkList').innerHTML = html || '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">No networks found</div></div>';
+                })
+                .catch(err => {
+                    document.getElementById('networkList').innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">Scan failed</div></div>';
+                });
+        }
+
+        function getSignalBars(rssi) {
+            let bars = '';
+            const strength = rssi > -50 ? 4 : rssi > -60 ? 3 : rssi > -70 ? 2 : 1;
+            for(let i = 1; i <= 4; i++) {
+                const height = i * 25 + '%';
+                const active = i <= strength ? 'active' : '';
+                bars += `<div class="signal-bar ${active}" style="height:${height}"></div>`;
+            }
+            return bars;
+        }
+
+        function selectNetwork(ssid, needsPassword) {
+            selectedSSID = ssid;
+            document.querySelectorAll('.network-item').forEach(item => {
+                item.classList.remove('selected');
+                const check = item.querySelector('.check-badge');
+                if(check) check.remove();
+            });
+            event.currentTarget.classList.add('selected');
+            const checkBadge = document.createElement('div');
+            checkBadge.className = 'check-badge';
+            checkBadge.textContent = '✓';
+            event.currentTarget.appendChild(checkBadge);
+            
+            const passwordSection = document.getElementById('passwordSection');
+            if(needsPassword) {
+                passwordSection.style.display = 'block';
+                setTimeout(() => document.getElementById('password').focus(), 300);
+            } else {
+                passwordSection.style.display = 'none';
+                connectWiFi();
+            }
+        }
+
+        function connectWiFi() {
+            const password = document.getElementById('password').value;
+            const Token = document.getElementById('Token') ? document.getElementById('Token').value.trim() : '';
+            const serverUrl = document.getElementById('serverUrl') ? document.getElementById('serverUrl').value.trim() : '';
+
+            if(Token.length > 128) {
+                showStatus('❌ Device ID too long (max 128 chars)', 'error');
+                return;
+            }
+            const idPattern = /^[A-Za-z0-9\-_.:]+$/;
+            if(Token.length > 0 && !idPattern.test(Token)) {
+                showStatus('❌ Device ID has invalid characters', 'error');
+                return;
+            }
+            if(serverUrl.length > 0) {
+                if(serverUrl.length > 256) {
+                    showStatus('❌ Server URL too long (max 256 chars)', 'error');
+                    return;
+                }
+                if(!/^https?:\/\//i.test(serverUrl)) {
+                    showStatus('❌ URL must start with http:// or https://', 'error');
+                    return;
+                }
+            }
+            
+            if(!selectedSSID) {
+                showStatus('❌ Please select a WiFi network', 'error');
+                return;
+            }
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('status').style.display = 'none';
+
+            fetch('/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `ssid=${encodeURIComponent(selectedSSID)}&password=${encodeURIComponent(password)}&device_id=${encodeURIComponent(Token)}&server_url=${encodeURIComponent(serverUrl)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loader').style.display = 'none';
+                if(data.success) {
+                    showStatus('✅ Connected! ESP32 restarting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'about:blank';
+                    }, 3000);
+                } else {
+                    showStatus('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(err => {
+                document.getElementById('loader').style.display = 'none';
+                showStatus('❌ Connection failed', 'error');
+            });
+        }
+
+        function saveSettings() {
+            const Token = document.getElementById('Token') ? document.getElementById('Token').value.trim() : '';
+            const serverUrl = document.getElementById('serverUrl') ? document.getElementById('serverUrl').value.trim() : '';
+
+            if(Token.length > 128) { showStatus('❌ Device ID too long (max 128 chars)', 'error'); return; }
+            const idPattern = /^[A-Za-z0-9\-_.:]+$/;
+            if(Token.length > 0 && !idPattern.test(Token)) { showStatus('❌ Device ID has invalid characters', 'error'); return; }
+            if(serverUrl.length > 0) {
+                if(serverUrl.length > 256) { showStatus('❌ Server URL too long (max 256 chars)', 'error'); return; }
+                if(!/^https?:\/\//i.test(serverUrl)) { showStatus('❌ URL must start with http:// or https://', 'error'); return; }
+            }
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('status').style.display = 'none';
+
+            fetch('/save_settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `device_id=${encodeURIComponent(Token)}&server_url=${encodeURIComponent(serverUrl)}`
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                document.getElementById('loader').style.display = 'none';
+                if(data.success) {
+                    showStatus('✅ Configuration saved successfully', 'success');
+                } else {
+                    showStatus('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(err => {
+                document.getElementById('loader').style.display = 'none';
+                showStatus('❌ Save failed', 'error');
+            });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'glass-card status ' + type;
+            status.style.display = 'block';
+        }
+
+        window.onload = () => {
+            fetch('/info')
+                .then(resp => resp.json())
+                .then(data => {
+                    if(data.device_id) document.getElementById('Token').value = data.device_id;
+                    if(data.server_url) document.getElementById('serverUrl').value = data.server_url;
+                })
+                .catch(()=>{}).finally(()=>{
+                    scanNetworks();
+                });
+        };
+    </script>
+</body>
 </html>

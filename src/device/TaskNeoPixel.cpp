@@ -1,12 +1,7 @@
-#include "TaskNeoPixel.h"
+#include "TaskNeoPIXEL.h"
+Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
 
-Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-
-volatile int colorIndex = 0;
-volatile bool buttonPressed = false;
-
-QueueHandle_t ledCommandQueue = nullptr;
-
+// Định nghĩa màu sắc của các trạng thái
 uint32_t colors[] = {
   strip.Color(255, 0, 0),     // Đỏ
   strip.Color(0, 255, 0),     // Xanh lá
@@ -16,46 +11,50 @@ uint32_t colors[] = {
   strip.Color(0, 0, 0)        // Tắt
 };
 
-// Hàm khởi tạo LED
-void InitNeoPixel() {
-  strip.begin();
-  strip.show();
-  Serial.println("NeoPixel initialized successfully.");
+void neo_blinky(void *pvParameters){
+    strip.begin();
+    // Set all pixels to off to start
+    strip.clear();
+    strip.show();
 
-  // Tạo hàng đợi nhận lệnh từ CoreIoT
-  ledCommandQueue = xQueueCreate(5, sizeof(bool));
-  if (ledCommandQueue == nullptr) {
-    Serial.println("[NeoPixel] ❌ Failed to create command queue!");
-  }
+    int state = 0; // Khởi tạo trạng thái ban đầu
+    Serial.begin(115200);  // Khởi tạo Serial để in log
 
-  // Tạo task LED
-  xTaskCreate(TaskNeoPixel, "TaskNeoPixel", 2048, NULL, 1, NULL);
-}
+    while(1) {   
+        // Cập nhật màu sắc dựa trên trạng thái
+        strip.setPixelColor(0, colors[state]); // Thiết lập màu cho pixel đầu tiên
+        strip.show(); // Cập nhật dải đèn
 
-// Task LED đổi màu dựa trên trạng thái buttonPressed
-void TaskNeoPixel(void *pvParameters) {
-  bool command = false;
+        // In log khi LED sáng
+        switch (state) {
+            case 0:  // Trạng thái 1: Đỏ sáng 1s
+                Serial.println("Trạng thái 1: Đỏ sáng 1 giây");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                break;
+            case 1:  // Trạng thái 2: Xanh lá sáng 2s
+                Serial.println("Trạng thái 2: Xanh lá sáng 2 giây");
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
+                break;
+            case 2:  // Trạng thái 3: Xanh dương sáng 3s
+                Serial.println("Trạng thái 3: Xanh dương sáng 3 giây");
+                vTaskDelay(3000 / portTICK_PERIOD_MS);
+                break;
+            case 3:  // Trạng thái 4: Tím sáng 4s
+                Serial.println("Trạng thái 4: Tím sáng 4 giây");
+                vTaskDelay(4000 / portTICK_PERIOD_MS);
+                break;
+            case 4:  // Trạng thái 5: Trắng sáng 5s
+                Serial.println("Trạng thái 5: Trắng sáng 5 giây");
+                vTaskDelay(5000 / portTICK_PERIOD_MS);
+                break;
+            case 5:  // Trạng thái 6: Tắt 1s
+                Serial.println("Trạng thái 6: Tắt sáng 1 giây");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                break;
+        }
 
-  while (true) {
-    // Nếu có lệnh mới từ CoreIoT → cập nhật trạng thái
-    if (xQueueReceive(ledCommandQueue, &command, 0)) {
-      buttonPressed = command;
-      Serial.printf("[NeoPixel] Received new state: %s\n", buttonPressed ? "ON" : "OFF");
 
-      if (!buttonPressed) {
-        strip.clear();
-        strip.show();
-      }
+        // Quay lại trạng thái đầu tiên sau khi hoàn thành trạng thái 6
+        state = (state + 1) % 6;  // Sau khi hoàn thành trạng thái 6, quay lại trạng thái 1
     }
-
-    // Khi bật → đổi màu liên tục
-    if (buttonPressed) {
-      colorIndex = (colorIndex + 1) % (sizeof(colors) / sizeof(colors[0]));
-      strip.setPixelColor(0, colors[colorIndex]);
-      strip.show();
-      Serial.printf("[NeoPixel] Auto changed color index: %d\n", colorIndex);
-    }
-
-    vTaskDelay(100  / portTICK_PERIOD_MS);
-  }
 }

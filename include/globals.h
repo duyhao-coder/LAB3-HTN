@@ -19,24 +19,29 @@
 #include <ArduinoJson.h>
 #include <Adafruit_Sensor.h>
 #include <ElegantOTA.h>
-#include <ESP_Google_Sheet_Client.h>
 #include "time.h"
-#include <GS_SDHelper.h> // For SD/SD_MMC mounting helper
 #include <HTTPClient.h>
 #include "WiFiClientSecure.h"
 #include <Arduino_MQTT_Client.h>
 #include <ThingsBoard.h>
 #include "DHT20.h"
 #include <freertos/queue.h>
+#include <TensorFlowLite_ESP32.h>
+#include "tensorflow/lite/micro/all_ops_resolver.h"
+#include "tensorflow/lite/micro/micro_error_reporter.h"
+#include "tensorflow/lite/micro/micro_interpreter.h"
+#include "tensorflow/lite/micro/system_setup.h"
+#include "tensorflow/lite/schema/schema_generated.h"
 // #include "../lib/ThingsBoard/ThingsBoard.h"
 
 //
-#include "../src/connect/TaskWifi.h"
-#include "../src/connect/Thingsboard.h"
-#include "../src/connect/TaskCoreIoT.h"
-#include "../src/device/TaskDHT11.h"
-#include "../src/device/TaskNeoPixel.h"
 #include "../src/device/TaskDHT20.h"
+#include "../src/device/TaskBlinky.h"
+#include "../src/device/TaskNeoPIXEL.h"
+#include "../src/connect/WiFiWebManager.h"
+#include "../src/connect/Taskbutton.h"
+#include "../src/connect/TaskWebserver.cpp"
+#include "../src/connect/tinyml.h"
 
 
 
@@ -75,7 +80,16 @@ extern volatile bool attributesChanged;
 extern volatile bool ledState;
 extern volatile uint16_t blinkingInterval;
 extern QueueHandle_t ledCommandQueue;
-
+extern float glob_temperature;
+extern float glob_humidity;
+enum LedState {
+  STATE_1 = 1,  // Sáng 1 giây, tắt 1 giây
+  STATE_2 = 2,  // Sáng 2 giây, tắt 1 giây
+  STATE_3 = 3,  // Sáng 3 giây, tắt 1 giây
+  STATE_4 = 4,  // Sáng 4 giây, tắt 1 giây
+  STATE_5 = 5   // Sáng 5 giây, tắt 1 giây
+};
+extern LedState status;
 
 //
 extern bool rainbowMode;

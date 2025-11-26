@@ -1,12 +1,14 @@
-#ifndef TASK_NEOPIXEL_H
-#define TASK_NEOPIXEL_H
+#ifndef TASKNEOPIXEL_H_
+#define TASKNEOPIXEL_H_
 
 #include "globals.h"
 
 
-// Các hàm chính
-void InitNeoPixel();
-// void TaskButton(void *pvParameters);
-void TaskNeoPixel(void *pvParameters);
+
+#define NEO_PIN 45
+#define LED_COUNT 1 
+
+void neo_blinky(void *pvParameters);
+
 
 #endif
